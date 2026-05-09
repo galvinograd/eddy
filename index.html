@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EDDY: Diverse Sampling in Diffusion Models with Marginal Preserving Particle Guidance</title>
+  <meta name="description" content="EDDY: a guidance mechanism for diffusion and flow-matching models that promotes diversity while preserving each sample's marginal distribution." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Noto+Sans:wght@400;500;700&family=Castoro:ital@0;1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script defer src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+  <header class="hero">
+    <div class="container">
+      <h1 class="title">
+        <span class="brand">EDDY</span>:
+        Diverse Sampling in Diffusion Models<br />with Marginal Preserving Particle Guidance
+      </h1>
+      <div class="authors">
+        <span class="author"><a href="mailto:gal.vinograd@biu.ac.il">Gal Vinograd</a><sup>1</sup></span>
+        <span class="author">Idan Achituve<sup>2</sup></span>
+        <span class="author">Ethan Fetaya<sup>1</sup></span>
+      </div>
+      <div class="affiliations">
+        <span><sup>1</sup>Bar-Ilan University</span>
+        <span><sup>2</sup>Independent Researcher</span>
+      </div>
+      <div class="badges">
+        <a class="badge" href="https://arxiv.org/abs/2605.06553" target="_blank" rel="noopener">
+          <span class="badge-icon">📄</span> arXiv
+        </a>
+        <a class="badge" href="https://arxiv.org/pdf/2605.06553" target="_blank" rel="noopener">
+          <span class="badge-icon">📕</span> PDF
+        </a>
+        <span class="badge badge-disabled">
+          <span class="badge-icon">💻</span> Code (soon)
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+  <section class="section">
+      <div class="container narrow">
+        <figure class="teaser">
+          <div class="img-wrap">
+            <img src="chairs_grid.webp"
+                 alt="Four rows of generated chair images comparing IID, CADS, PG, and EDDY (Ours). EDDY produces more diverse scenes while maintaining image quality."
+                 loading="lazy"
+                 onload="this.parentElement.classList.add('loaded')"
+                 onerror="this.parentElement.classList.add('loaded')" />
+          </div>
+          <figcaption>
+            <em>”No one is in the room but there are chairs. High-quality, 8K.”</em><br><br>
+            <strong>I.I.D</strong> (top): Low diversity among samples.
+            <strong>CADS</strong> (upper-middle): High-quality samples but with low prompt adherence (people in the second sample).
+            <strong>PG</strong> (lower-middle): Increased variety with visible artifacts.
+            <strong>EDDY</strong> (bottom): Diverse output that preserves photorealism and prompt fidelity.
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section section-alt">
+      <div class="container narrow">
+        <h2>Abstract</h2>
+        <p>
+          We present <strong>EDDY</strong> (<strong>E</strong>xact-marginal <strong>D</strong>iversification via
+          <strong>D</strong>ivergence-free d<strong>Y</strong>namics), a guidance mechanism for diffusion and flow
+          matching models that promotes diversity among samples generated while maintaining quality. EDDY exploits
+          symmetries of the Fokker-Planck equation, using drift perturbations that change particle trajectories while
+          preserving the evolving marginal distribution. We instantiate this principle through kernel-based
+          anti-symmetric pairwise matrix fields, constructed from the repulsive directions. The resulting
+          divergence-free dynamics promote diversity at the joint particle level while preserving each particle's
+          marginal distribution without any additional training. As computing the guidance can be computationally
+          expensive in cases such as text-to-image generation with perceptual embeddings, we propose practical
+          approximations as an effective and efficient solution. Experiments on synthetic distributions and
+          text-to-image generation show that EDDY improves diversity while maintaining strong distributional
+          fidelity compared to common baselines.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <h2>EDDY's Building Block</h2>
+        <p class="lede">
+          Let \(k(x,y)\) be a similarity kernel (e.g. RBF).
+          Naively, driving particles away from \(x_{\mathrm{star}}\) can be achieved using the negative kernel gradient:
+        </p>
+        <div class="sim-grid">
+          <figure class="sim-panel">
+            <figcaption>Naive repulsion</figcaption>
+            <canvas id="canvas-pg" width="140" height="140" aria-label="Naive repulsion transport field simulation"></canvas>
+          </figure>
+        </div>
+        <p class="lede">
+          Unfortunately, this distorts the marginal distribution.
+          Instead, EDDY constructs an anti-symmetric matrix field using direction \( v_\textrm{star} \) and applies Stein's operator,
+          producing a vortex-like (eddy-like) motion that preserves the marginal exactly:
+        </p>
+        <div class="sim-grid">
+          <figure class="sim-panel">
+            <figcaption>EDDY <span class="muted">(Ours)</span></figcaption>
+            <canvas id="canvas-eddy" width="140" height="140" aria-label="EDDY transport field simulation"></canvas>
+          </figure>
+        </div>
+
+        <details class="sim-math">
+          <summary>Show the math</summary>
+          <p>
+            <strong>Naive repulsion</strong> uses the negative kernel gradient as a repulsive direction
+            \(r := -\nabla_x k(x,\,x_{\mathrm{star}})\).
+          </p>
+          <p>
+            <strong>EDDY</strong> instead builds an anti-symmetric matrix from repulsive vector \(r\) and an arbitrary transport vector \(v_\textrm{star}\):
+            \[
+              A \;:=\; r \otimes v_\textrm{star} \;-\; v_\textrm{star} \otimes r,
+            \]
+            and applies Stein's operator with respect to the underlying distribution \(p\):
+            \[
+              \mathcal{A}_p(A) :\;=\; A\,\nabla\log p(x_{\mathrm{star}}) \;+\; \operatorname{div} A.
+            \]
+            Interestingly, \(\text{div}\,A\) is the divergence-free kernel
+            \[
+              \bigl(\nabla^2_x k(x,x_\textrm{star}) \;-\; \Delta_x k(x,x_\textrm{star}) \bigr) \; v_\textrm{star},
+            \]
+            which dominates \(\mathcal{A}_p(A)\) as the dimension grows.
+          </p>
+        </details>
+      </div>
+    </section>
+
+    <section class="section section-alt">
+      <div class="container">
+        <h2>EDDY Promotes Diversity</h2>
+        <p class="lede">
+          When the direction \(v_1,\ldots,v_n\) is chosen as the velocity each particle \(x_1,\ldots,x_n\) follows
+          in a diffusion or flow matching process, EDDY's building block naturally promotes diversity —
+          steering particles toward different modes without altering any particle's marginal distribution:
+        </p>
+        <div class="sim-grid">
+          <figure class="sim-panel">
+            <figcaption>I.I.D <span class="muted"></span></figcaption>
+            <canvas id="canvas-vp-iid" width="140" height="140" aria-label="IID simulation"></canvas>
+          </figure>
+          <figure class="sim-panel">
+            <figcaption>EDDY <span class="muted">(Ours)</span></figcaption>
+            <canvas id="canvas-vp-eddy" width="140" height="140" aria-label="EDDY simulation"></canvas>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="gallery">
+      <div class="container">
+        <h2>EDDY in Text-to-Image Generation</h2>
+        <p class="lede">
+          EDDY applied to FLUX.1&#x2011;dev and Stable Diffusion XL on COCO captions. Each panel shows four generated variants for the same prompt and random seed — I.I.D samples independently while EDDY steers all four particles apart without changing any individual marginal distribution.
+        </p>
+        <div class="gallery-wrap" id="galleryWrap">
+          <div class="gallery-slides" id="gallerySlides"></div>
+          <div class="gallery-nav">
+            <button class="gallery-arrow" id="galleryPrev" aria-label="Previous slide">&#8592;</button>
+            <div class="gallery-dots" id="galleryDots"></div>
+            <button class="gallery-arrow" id="galleryNext" aria-label="Next slide">&#8594;</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt">
+      <div class="container narrow">
+        <h2>BibTeX</h2>
+<pre class="bibtex"><code>@article{vinograd2026eddy,
+  title   = {Diverse Sampling in Diffusion Models with Marginal Preserving Particle Guidance},
+  author  = {Vinograd, Gal and Achituve, Idan and Fetaya, Ethan},
+  journal = {arXiv preprint arXiv:2605.06553},
+  year    = {2026}
+}</code></pre>
+      </div>
+    </section>
+
+  </main>
+
+
+  <footer class="footer">
+    <div class="container narrow">
+      <p>
+        Page template inspired by
+        <a href="https://nerfies.github.io/" target="_blank" rel="noopener">Nerfies</a>
+        and
+        <a href="https://guytevet.github.io/CLoSD-page/" target="_blank" rel="noopener">CLoSD</a>.
+        Released under
+        <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>.
+      </p>
+    </div>
+  </footer>
+
+  <script src="sim.js" defer></script>
+  <script src="gallery.js" defer></script>
+</body>
+</html>
