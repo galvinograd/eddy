@@ -419,17 +419,6 @@
   const BG_DOT_R  = 3;
   const BG_ALPHA  = 0.1;
 
-  // Five curated starting-point sets where EDDY covers all 5 modes, IID covers 2.
-  // Selected by scanning mulberry32 seeds 1–50000 under WG=-3.5, GM=1.0.
-  const REPEAT_PTS = [
-    [[-0.7604, 0.5676], [-0.5815, -1.894 ], [-0.2364, -0.7644], [ 0.4966, -0.5911], [-0.601,   0.2809]],
-    [[ 0.5239, 0.4875], [ 0.2036,  2.0946], [ 0.238,  -1.0312], [ 0.0585, -1.6112], [-0.246,   0.9842]],
-    [[ 0.7054, 0.642 ], [ 0.24,    0.3151], [-0.3253,  1.2442], [-0.1087, -1.1887], [ 0.4534, -0.6634]],
-    [[ 0.5616, 0.1988], [ 0.8267, -0.5656], [-0.6427,  0.8943], [-1.9026,  0.1641], [-0.8471,  0.7014]],
-    [[ 0.9105, 0.5069], [ 1.0072,  0.167 ], [-1.3623,  0.9111], [ 1.2468, -0.278 ], [-1.4429,  0.0132]],
-  ];
-  let repeatIdx = 0;
-
   const PCOLS2 = ["#e74c3c","#3498db","#27ae60","#f39c12","#9b59b6"];
   const PCOLS2_RGB = PCOLS2.map(h => [
     parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)
@@ -519,10 +508,31 @@
     });
   }
 
-  function generateSpreadPts() {
-    const pts = REPEAT_PTS[repeatIdx].map(p => [...p]);
-    repeatIdx = (repeatIdx + 1) % REPEAT_PTS.length;
-    return pts;
+  // Coupled prior (paper's "negatively correlated initialization", cf. Eq. above
+  // eddyGuide): draw z_1,...,z_n ~ p_0 = N(0, I_2), remove the batch mean, and
+  // rescale by sqrt(n/(n-1)) so each particle's marginal stays exactly p_0
+  // (subtracting the mean shrinks per-particle variance by (n-1)/n; this
+  // rescaling restores it) while the batch is anti-correlated at init.
+  //
+  // Five curated coupled-prior starts, shared by BOTH panels, where the
+  // guided drift (EDDY) reaches all 5 modes but the same start run through
+  // the plain probability-flow ODE (no guidance) reaches only 2 — isolating
+  // the drift's own contribution from the coupled initialization, since both
+  // panels begin from the identical negatively-correlated batch. Selected by
+  // scanning mulberry32 seeds 1–30000 under WG=-3.5, GM=1.0.
+  const REPEAT_STARTS = [
+    [[1.3224230140, 1.2256451225], [-1.0157706956, -0.7903174698], [-0.8741186543, -1.8499491290], [0.1143761277, 1.0172618423], [0.4530902083, 0.3973596341]],
+    [[1.3295612550, 0.7665079037], [-0.5818965005, -0.3591453194], [1.2242455849, 0.4843692565], [-1.0009065894, -0.8895533127], [-0.9710037501, -0.0021785281]],
+    [[1.5109217148, -1.0961817346], [-0.9393992926, 0.5942804717], [0.6409901936, 0.4450698689], [-1.6565703969, 0.3770300093], [0.4440577811, -0.3201986152]],
+    [[1.3978972502, -1.2713127345], [-1.0467073351, 0.5072896908], [-0.5633950633, 1.3643708556], [-0.8319228998, 0.5176982394], [1.0441280480, -1.1180460513]],
+    [[-1.9359679666, 0.9965142744], [1.6600565307, -1.2970966354], [-0.6002085947, 0.9900579272], [-0.3098242307, 0.8954206246], [1.1859442613, -1.5848961908]],
+  ];
+  let repeatIdx = 0;
+
+  function nextRepeatStart() {
+    const pts = REPEAT_STARTS[repeatIdx];
+    repeatIdx = (repeatIdx + 1) % REPEAT_STARTS.length;
+    return pts.map(p => [...p]);
   }
 
   // ================================================================
@@ -744,9 +754,9 @@
 
   function startEpisode() {
     episodeHold = 0;
-    const pts = generateSpreadPts();
-    eddyPanel2.startEpisode(pts);
-    iidPanel2.startEpisode(pts);
+    const start = nextRepeatStart();
+    eddyPanel2.startEpisode(start);
+    iidPanel2.startEpisode(start.map(p => [...p]));
   }
 
   function vpLoop() {
