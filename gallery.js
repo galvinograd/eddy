@@ -1,23 +1,37 @@
 (() => {
   const SLIDES = [
-    { id: '00010', prompt: 'A young boy in his pajamas is playing a video game.',
-      iid: 'gallery/none', eddy: 'gallery/eddy_bw0_013' },
+    { id: '00003', prompt: 'The old woman is in the kitchen ready to make food.',
+      iid: 'gallery/flux2_none', eddy: 'gallery/flux2_eddy_mid' },
+    { id: '00046', prompt: 'A dock that is separating the harbor from the ocean.',
+      iid: 'gallery/flux1_none', eddy: 'gallery/flux1_eddy_high' },
+    { id: '00075', prompt: 'A large bear that is sitting on grass.',
+      iid: 'gallery/flux2_none', eddy: 'gallery/flux2_eddy_high' },
+    { id: '00006', prompt: 'Three skiers climb up a snow covered hill.',
+      iid: 'gallery/flux1_none', eddy: 'gallery/flux1_eddy_mid' },
+    { id: '00014', prompt: 'Two different shaped white vases on a rack.',
+      iid: 'gallery/flux2_none', eddy: 'gallery/flux2_eddy_high' },
     { id: '00007', prompt: 'A woman writing something down on paper while the laptop sits on the table.',
-      iid: 'gallery/none_pp3', eddy: 'gallery/eddy_bw0_016_pp3' },
-    { id: '00001', prompt: 'A man on a motorbike rides down the street.',
-      iid: 'gallery/none_sdxl_pp2', eddy: 'gallery/eddy_sdxl_pp2' },
+      iid: 'gallery/flux1_none', eddy: 'gallery/flux1_eddy_mid' },
+    { id: '00083', prompt: 'A motorcycle parked near a fence by a beach.',
+      iid: 'gallery/flux1_none', eddy: 'gallery/flux1_eddy_mid' },
+    { id: '00035', prompt: 'A very blurry picture of an intersection taken from a moving car.',
+      iid: 'gallery/flux1_none', eddy: 'gallery/flux1_eddy_high' },
     { id: '00000', prompt: 'No one is in the room but there are chairs.',
-      iid: 'gallery/none_pp3', eddy: 'gallery/eddy_bw0_016_pp3' },
-    { id: '00002', prompt: 'Numerous motor scooters parked by backing in facing the street.',
-      iid: 'gallery/none_sdxl_pp3', eddy: 'gallery/eddy_sdxl_pp3' },
-    { id: '00005', prompt: 'A plate of stir fry vegetables on white rice.',
-      iid: 'gallery/none_pp3', eddy: 'gallery/eddy_bw0_016_pp3' },
-    { id: '00018', prompt: 'A woman sitting in front of a giant pizza.',
-      iid: 'gallery/none_pp1', eddy: 'gallery/eddy_bw0_013_pp1' },
+      iid: 'gallery/flux1_none', eddy: 'gallery/flux1_eddy_high' },
+    { id: '00020', prompt: 'A man and woman who are standing in the snow.',
+      iid: 'gallery/flux1_none', eddy: 'gallery/flux1_eddy_high' },
+    { id: '00027', prompt: 'Some girls in colorful shirts standing by some pastries.',
+      iid: 'gallery/flux1_none', eddy: 'gallery/flux1_eddy_high' },
+    { id: '00044', prompt: 'A man is seen walking out of a building.',
+      iid: 'gallery/flux1_none', eddy: 'gallery/flux1_eddy_high' },
+    { id: '00052', prompt: 'A TV showing two men in hats and women.',
+      iid: 'gallery/flux1_none', eddy: 'gallery/flux1_eddy_high' },
     { id: '00016', prompt: 'A person on skis on snowy forest path.',
-      iid: 'gallery/none_pp3', eddy: 'gallery/eddy_bw0_016_pp3' },
-    { id: '00004', prompt: 'Many electronic devices and a tangle of wires are on and around the desk.',
-      iid: 'gallery/none_pp3', eddy: 'gallery/eddy_bw0_016_pp3' },
+      iid: 'gallery/flux2_none', eddy: 'gallery/flux2_eddy_high' },
+    { id: '00001', prompt: 'A man on a motorbike rides down the street.',
+      iid: 'gallery/sdxl_none', eddy: 'gallery/sdxl_eddy_mid' },
+    { id: '00071', prompt: 'A train is traveling quickly as a group of people look on.',
+      iid: 'gallery/sdxl_none', eddy: 'gallery/sdxl_eddy_mid' },
   ];
 
   const INTERVAL = 4500;
@@ -31,9 +45,9 @@
     return `translateX(calc(-${idx * 100}% - ${idx * SLIDE_GAP}px))`;
   }
 
-  function imgGrid(dir, id, eager) {
+  function imgGrid(dir, id, eager, label, prompt) {
     return [0, 1, 2, 3].map(v =>
-      `<div class="img-wrap"><img src="${dir}/img_${id}_v${v}.webp" alt="variant ${v}"${eager ? '' : ' loading="lazy"'} decoding="async" onload="this.parentElement.classList.add('loaded')" onerror="this.parentElement.classList.add('loaded')"></div>`
+      `<div class="img-wrap"><img src="${dir}/img_${id}_v${v}.webp" alt="${label} sample ${v + 1} of 4 for the prompt &quot;${prompt}&quot;"${eager ? '' : ' loading="lazy"'} decoding="async" onload="this.parentElement.classList.add('loaded')" onerror="this.parentElement.classList.add('loaded')"></div>`
     ).join('');
   }
 
@@ -42,11 +56,11 @@
   <div class="gallery-cols">
     <div class="gallery-col">
       <div class="gallery-col-label">I.I.D</div>
-      <div class="gallery-img-grid">${imgGrid(s.iid, s.id, eager)}</div>
+      <div class="gallery-img-grid">${imgGrid(s.iid, s.id, eager, 'I.I.D', s.prompt)}</div>
     </div>
     <div class="gallery-col">
       <div class="gallery-col-label">EDDY <span class="muted">(Ours)</span></div>
-      <div class="gallery-img-grid">${imgGrid(s.eddy, s.id, eager)}</div>
+      <div class="gallery-img-grid">${imgGrid(s.eddy, s.id, eager, 'EDDY', s.prompt)}</div>
     </div>
   </div>
   <div class="gallery-meta">
